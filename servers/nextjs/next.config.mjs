@@ -2,20 +2,26 @@
 const nextConfig = {
   reactStrictMode: false,
   distDir: ".next-build",
-  output: 'standalone',
-  
+  output: "standalone",
 
-  // Rewrites for development - proxy font requests to FastAPI backend
+  // Rewrites for development - proxy requests to FastAPI backend
   async rewrites() {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+    // Use INTERNAL_API_URL for server-side Docker communication
+    // Falls back to localhost for local development
+    const backendUrl = process.env.INTERNAL_API_URL || 'http://localhost:8000';
+    
     return [
       {
-        source: '/api/v1/:path*',
-        destination: `${apiBaseUrl}/api/v1/:path*`,
+        source: '/app_data/fonts/:path*',
+        destination: `${backendUrl}/app_data/fonts/:path*`,
       },
       {
-        source: '/app_data/:path*',
-        destination: `${apiBaseUrl}/app_data/:path*`,
+        source: '/app_data/images/:path*',
+        destination: `${backendUrl}/app_data/images/:path*`,
+      },
+      {
+        source: '/api/v1/:path*',
+        destination: `${backendUrl}/api/v1/:path*`,
       },
     ];
   },
@@ -33,6 +39,10 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "pptgen-public.s3.ap-south-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
       },
       {
         protocol: "https",

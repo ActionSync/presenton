@@ -1,30 +1,23 @@
-import os
 import asyncio
 import json
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
-from utils.get_env import get_app_data_directory_env
 
 
 class IconFinderService:
     def __init__(self):
         self.collection_name = "icons"
-        data_dir = get_app_data_directory_env() or "/tmp/presenton"
-        chroma_path = os.path.join(data_dir, "chroma")
-        os.makedirs(chroma_path, exist_ok=True)
-        
         self.client = chromadb.PersistentClient(
-            path=chroma_path, settings=Settings(anonymized_telemetry=False)
+            path="chroma", settings=Settings(anonymized_telemetry=False)
         )
-        print(f"Initializing icons collection at {chroma_path}...")
-        self._initialize_icons_collection(chroma_path)
+        print("Initializing icons collection...")
+        self._initialize_icons_collection()
         print("Icons collection initialized.")
 
-    def _initialize_icons_collection(self, chroma_path: str):
+    def _initialize_icons_collection(self):
         self.embedding_function = ONNXMiniLM_L6_V2()
-        self.embedding_function.DOWNLOAD_PATH = os.path.join(chroma_path, "models")
-        os.makedirs(self.embedding_function.DOWNLOAD_PATH, exist_ok=True)
+        self.embedding_function.DOWNLOAD_PATH = "chroma/models"
         self.embedding_function._download_model_if_not_exists()
         try:
             self.collection = self.client.get_collection(

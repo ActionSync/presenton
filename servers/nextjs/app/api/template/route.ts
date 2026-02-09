@@ -9,8 +9,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing group name" }, { status: 400 });
   }
 
-  const presentonUrl = process.env.PRESENTON_URL || "http://localhost";
-  const schemaPageUrl = `${presentonUrl}/schema?group=${encodeURIComponent(
+  const schemaPageUrl = `http://localhost/schema?group=${encodeURIComponent(
     groupName
   )}`;
 

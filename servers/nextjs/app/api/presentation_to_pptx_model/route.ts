@@ -98,8 +98,7 @@ async function getBrowserAndPage(id: string): Promise<[Browser, Page]> {
   await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
   page.setDefaultNavigationTimeout(300000);
   page.setDefaultTimeout(300000);
-  const presentonUrl = process.env.PRESENTON_URL || "http://localhost";
-  await page.goto(`${presentonUrl}/pdf-maker?id=${id}`, {
+  await page.goto(`http://localhost/pdf-maker?id=${id}`, {
     waitUntil: "networkidle0",
     timeout: 300000,
   });

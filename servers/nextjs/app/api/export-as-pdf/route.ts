@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import puppeteer from "puppeteer";
+import { uploadBufferToGcs } from "@/lib/gcsStorage";
 
 import { sanitizeFilename } from "@/app/(presentation-generator)/utils/others";
 import { NextResponse, NextRequest } from "next/server";
@@ -34,8 +35,7 @@ export async function POST(req: NextRequest) {
   page.setDefaultNavigationTimeout(300000);
   page.setDefaultTimeout(300000);
 
-  const presentonUrl = process.env.PRESENTON_URL || "http://localhost";
-  await page.goto(`${presentonUrl}/pdf-maker?id=${id}`, {
+  await page.goto(`http://localhost/pdf-maker?id=${id}`, {
     waitUntil: "networkidle0",
     timeout: 300000,
   });
@@ -49,18 +49,18 @@ export async function POST(req: NextRequest) {
         const allElements = document.querySelectorAll('*');
         let loadedElements = 0;
         let totalElements = allElements.length;
-
+        
         for (let el of allElements) {
             const style = window.getComputedStyle(el);
-            const isVisible = style.display !== 'none' &&
-                            style.visibility !== 'hidden' &&
+            const isVisible = style.display !== 'none' && 
+                            style.visibility !== 'hidden' && 
                             style.opacity !== '0';
-
+            
             if (isVisible && el.offsetWidth > 0 && el.offsetHeight > 0) {
                 loadedElements++;
             }
         }
-
+        
         return (loadedElements / totalElements) >= 0.99;
       }
       `,
@@ -82,6 +82,19 @@ export async function POST(req: NextRequest) {
   browser.close();
 
   const sanitizedTitle = sanitizeFilename(title ?? "presentation");
+  const gcsUrl = await uploadBufferToGcs(
+    pdfBuffer,
+    `exports/${sanitizedTitle}.pdf`,
+    "application/pdf"
+  );
+
+  if (gcsUrl) {
+    return NextResponse.json({
+      success: true,
+      path: gcsUrl,
+    });
+  }
+
   const appDataDirectory = process.env.APP_DATA_DIRECTORY!;
   if (!appDataDirectory) {
     return NextResponse.json({
