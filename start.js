@@ -143,23 +143,22 @@ const startServers = async () => {
     console.error("App MCP process failed to start:", err);
   });
 
-  const nextjsProcess = spawn(
-    "npm",
-    [
-      "run",
-      isDev ? "dev" : "start",
-      "--",
-      "-H",
-      "127.0.0.1",
-      "-p",
-      nextjsPort.toString(),
-    ],
-    {
-      cwd: nextjsDir,
-      stdio: "inherit",
-      env: process.env,
-    }
-  );
+  const nextjsCommand = isDev ? "npm" : "node";
+  const nextjsArgs = isDev
+    ? ["run", "dev", "--", "-H", "127.0.0.1", "-p", nextjsPort.toString()]
+    : ["server.js"];
+
+  const nextjsEnv = { ...process.env };
+  if (!isDev) {
+    nextjsEnv.HOSTNAME = "127.0.0.1";
+    nextjsEnv.PORT = nextjsPort.toString();
+  }
+
+  const nextjsProcess = spawn(nextjsCommand, nextjsArgs, {
+    cwd: nextjsDir,
+    stdio: "inherit",
+    env: nextjsEnv,
+  });
 
   nextjsProcess.on("error", (err) => {
     console.error("Next.js process failed to start:", err);

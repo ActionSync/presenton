@@ -117,3 +117,15 @@ def get_dall_e_3_quality_env():
 # Gpt Image 1.5 Quality
 def get_gpt_image_1_5_quality_env():
     return os.getenv("GPT_IMAGE_1_5_QUALITY")
+
+
+def get_gcs_bucket_env():
+    return os.getenv("GCS_BUCKET")
+
+
+def get_gcs_prefix_env():
+    return os.getenv("GCS_PREFIX")
+
+
+def get_gemini_flash_model_env():
+    return os.getenv("GEMINI_FLASH_MODEL", "models/imagen-4.0-fast-generate-001")

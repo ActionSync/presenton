@@ -2,11 +2,9 @@
 import { Button } from "@/components/ui/button";
 import {
   SquareArrowOutUpRight,
-  Play,
   Loader2,
   Redo2,
   Undo2,
-
 } from "lucide-react";
 import React, { useState } from "react";
 import Wrapper from "@/components/Wrapper";
@@ -20,7 +18,6 @@ import { PresentationGenerationApi } from "../../services/api/presentation-gener
 import { OverlayLoader } from "@/components/ui/overlay-loader";
 import { useDispatch, useSelector } from "react-redux";
 
-import Link from "next/link";
 
 import { RootState } from "@/store/store";
 import { toast } from "sonner";
@@ -28,7 +25,6 @@ import { toast } from "sonner";
 
 import Announcement from "@/components/Announcement";
 import { PptxPresentationModel } from "@/types/pptx_models";
-import HeaderNav from "../../components/HeaderNab";
 import PDFIMAGE from "@/public/pdf.svg";
 import PPTXIMAGE from "@/public/pptx.svg";
 import Image from "next/image";
@@ -40,10 +36,8 @@ import { clearHistory } from "@/store/slices/undoRedoSlice";
 
 const Header = ({
   presentation_id,
-  currentSlide,
 }: {
   presentation_id: string;
-  currentSlide?: number;
 }) => {
   const [open, setOpen] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
@@ -141,16 +135,31 @@ const Header = ({
     trackEvent(MixpanelEvent.Header_ReGenerate_Button_Clicked, { pathname });
     router.push(`/presentation?id=${presentation_id}&stream=true`);
   };
-  const downloadLink = (path: string) => {
-    // if we have popup access give direct download if not redirect to the path
-    if (window.opener) {
-      window.open(path, '_blank');
-    } else {
+  const downloadLink = async (path: string) => {
+    try {
+      // Fetch the file as a blob to force download
+      const response = await fetch(path);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
       const link = document.createElement('a');
-      link.href = path;
+      link.href = url;
       link.download = path.split('/').pop() || 'download';
       document.body.appendChild(link);
       link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      // Fallback to direct link if blob download fails
+      const link = document.createElement('a');
+      link.href = path;
+      link.download = path.split('/').pop() || 'download';
+      link.target = '_self';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -211,7 +220,8 @@ const Header = ({
 
       </div>
 
-      {/* Present Button */}
+      {/* Present button (disabled) */}
+      {/*
       <Button
         onClick={() => {
           const to = `?id=${presentation_id}&mode=present&slide=${currentSlide || 0}`;
@@ -224,6 +234,7 @@ const Header = ({
         <Play className="w-4 h-4 mr-1 stroke-white group-hover:stroke-black" />
         Present
       </Button>
+      */}
 
       {/* Desktop Export Button with Popover */}
 
@@ -264,6 +275,15 @@ const Header = ({
 
         <Announcement />
         <Wrapper className="flex items-center justify-between py-1">
+          <div className="min-w-[162px]">
+            <img
+              className="h-16"
+              src="/logo-white.png"
+              alt="Presentation logo"
+            />
+          </div>
+          {/* Logo link (disabled) */}
+          {/*
           <Link href="/dashboard" className="min-w-[162px]">
             <img
               className="h-16"
@@ -271,6 +291,7 @@ const Header = ({
               alt="Presentation logo"
             />
           </Link>
+          */}
 
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center gap-4 2xl:gap-6">
@@ -280,13 +301,10 @@ const Header = ({
 
 
             <MenuItems mobile={false} />
-            <HeaderNav />
           </div>
 
           {/* Mobile Menu */}
           <div className="lg:hidden flex items-center gap-4">
-            <HeaderNav />
-
           </div>
         </Wrapper>
 
